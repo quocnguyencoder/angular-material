@@ -26,9 +26,10 @@ const ELEMENT_DATA: PeriodicElement[] = [
 ];
 
 @Component({
-  selector: 'app-customer-list',
-  templateUrl: './customer-list.component.html',
-  styleUrls: ['./customer-list.component.scss']
+    selector: 'app-customer-list',
+    templateUrl: './customer-list.component.html',
+    styleUrls: ['./customer-list.component.scss'],
+    standalone: false
 })
 export class CustomerListComponent implements OnInit {
   displayedColumns: string[] = ['position', 'name', 'weight', 'symbol'];

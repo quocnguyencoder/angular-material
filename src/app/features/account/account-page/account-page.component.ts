@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 
 @Component({
-  selector: 'app-account-page',
-  templateUrl: './account-page.component.html',
-  styleUrls: ['./account-page.component.scss']
+    selector: 'app-account-page',
+    templateUrl: './account-page.component.html',
+    styleUrls: ['./account-page.component.scss'],
+    standalone: false
 })
 export class AccountPageComponent implements OnInit {
 

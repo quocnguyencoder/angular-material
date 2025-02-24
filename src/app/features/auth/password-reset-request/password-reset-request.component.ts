@@ -7,9 +7,10 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthenticationService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-password-reset-request',
-  templateUrl: './password-reset-request.component.html',
-  styleUrls: ['./password-reset-request.component.scss']
+    selector: 'app-password-reset-request',
+    templateUrl: './password-reset-request.component.html',
+    styleUrls: ['./password-reset-request.component.scss'],
+    standalone: false
 })
 export class PasswordResetRequestComponent implements OnInit {
 
