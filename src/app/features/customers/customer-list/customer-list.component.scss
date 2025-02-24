@@ -1,7 +1,11 @@
 table {
-    width: 100%;
+  width: 100%;
 }
 
 th.mat-sort-header-sorted {
-    color: black;
+  color: black;
+}
+
+mat-card-content {
+  flex-direction: column;
 }
