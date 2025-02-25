@@ -1,79 +1,112 @@
-<div class="container" fxLayout="row" fxLayoutAlign="center none">
-  <div fxFlex="95%">
-    <mat-card appearance="outlined">
-      <mat-card-content>
-        <h2>Customers</h2>
-
-        <div fxLayout="row" fxLayoutAlign="space-between center" fxFlex="100%">
-          <button mat-raised-button color="primary" (click)="openDialog()">
-            Add Element
-          </button>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Search</mat-label>
-            <input
-              matInput
-              (keyup)="applyFilter($event)"
-              placeholder="Ex. Hydrogen"
-            />
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-        </div>
-
-        <div
-          *ngIf="loading"
-          fxLayout="row"
-          fxLayoutAlign="center center"
-          fxFlex="100%"
-        >
-          <mat-spinner></mat-spinner>
-        </div>
-
-        <table mat-table [dataSource]="dataSource" matSort *ngIf="!loading">
-          <!-- Position Column -->
-          <ng-container matColumnDef="position">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>No.</th>
-            <td mat-cell *matCellDef="let element">{{ element.position }}</td>
-          </ng-container>
-
-          <!-- Name Column -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-          </ng-container>
-
-          <!-- Weight Column -->
-          <ng-container matColumnDef="weight">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Weight</th>
-            <td mat-cell *matCellDef="let element">{{ element.weight }}</td>
-          </ng-container>
-
-          <!-- Symbol Column -->
-          <ng-container matColumnDef="symbol">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Symbol</th>
-            <td mat-cell *matCellDef="let element">{{ element.symbol }}</td>
-          </ng-container>
-
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let element">
-              <button mat-button (click)="openDialog(element)">Update</button>
-              <button mat-button (click)="deleteElement(element.position)">
-                Delete
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-
-        <mat-paginator
-          [pageSizeOptions]="[5, 10, 20]"
-          showFirstLastButtons
-        ></mat-paginator>
-      </mat-card-content>
-    </mat-card>
+<div class="container">
+  <div class="header">
+    <h1>Customer List</h1>
+    <button mat-raised-button color="primary" (click)="openDialog()">
+      Add Element
+    </button>
   </div>
+
+  <div class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput [formControl]="nameFilter" placeholder="Filter by name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Date</mat-label>
+      <input matInput [formControl]="dateFilter" type="date" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Time</mat-label>
+      <input matInput [formControl]="timeFilter" placeholder="Filter by time" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select [formControl]="statusFilter">
+        <mat-option value="">All</mat-option>
+        <mat-option *ngFor="let status of statusOptions" [value]="status">
+          {{ status }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Apply Filter Icon Button -->
+    <button
+      mat-icon-button
+      color="primary"
+      (click)="applyFilter()"
+      matTooltip="Apply Filter"
+    >
+      <mat-icon>search</mat-icon>
+    </button>
+
+    <!-- Clear Filters Icon Button -->
+    <button
+      mat-icon-button
+      color="warn"
+      (click)="clearFilters()"
+      matTooltip="Clear Filters"
+    >
+      <mat-icon>clear</mat-icon>
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <table *ngIf="!loading" mat-table [dataSource]="tableDataSource" matSort>
+    <!-- Column definitions -->
+    <ng-container matColumnDef="position">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>No.</th>
+      <td mat-cell *matCellDef="let element">{{ element.position }}</td>
+    </ng-container>
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+      <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+    </ng-container>
+    <ng-container matColumnDef="weight">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Weight</th>
+      <td mat-cell *matCellDef="let element">{{ element.weight }}</td>
+    </ng-container>
+    <ng-container matColumnDef="symbol">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Symbol</th>
+      <td mat-cell *matCellDef="let element">{{ element.symbol }}</td>
+    </ng-container>
+    <ng-container matColumnDef="date">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+      <td mat-cell *matCellDef="let element">{{ element.date | date }}</td>
+    </ng-container>
+    <ng-container matColumnDef="time">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Time</th>
+      <td mat-cell *matCellDef="let element">{{ element.time }}</td>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+      <td mat-cell *matCellDef="let element">{{ element.status }}</td>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let element">
+        <button mat-icon-button (click)="openDialog(element)">
+          <mat-icon color="primary">edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="deleteElement(element.position)">
+          <mat-icon color="warn">delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+
+  <mat-paginator
+    [pageSizeOptions]="[5, 10, 20]"
+    showFirstLastButtons
+    aria-label="Select page of elements"
+  >
+  </mat-paginator>
 </div>

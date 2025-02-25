@@ -9,36 +9,39 @@ import { tap } from 'rxjs/operators';
 
 import { AuthenticationService } from '../services/auth.service';
 import { MatDialog } from '@angular/material/dialog';
- 
+
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-    private authService = inject(AuthenticationService);
-    private router = inject(Router);
-    private dialog = inject(MatDialog);
+  private authService = inject(AuthenticationService);
+  private router = inject(Router);
+  private dialog = inject(MatDialog);
 
+  intercept(
+    req: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<HttpEvent<any>> {
+    const user = this.authService.getCurrentUser();
 
-    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (user && user.token) {
+      const cloned = req.clone({
+        headers: req.headers.set('Authorization', 'Bearer ' + user.token),
+      });
 
-        const user = this.authService.getCurrentUser();
-
-        if (user && user.token) {
-
-            const cloned = req.clone({
-                headers: req.headers.set('Authorization',
-                    'Bearer ' + user.token)
-            });
-
-            return next.handle(cloned).pipe(tap(() => { }, (err: any) => {
-                if (err instanceof HttpErrorResponse) {
-                    if (err.status === 401) {
-                        this.dialog.closeAll();
-                        this.router.navigate(['/auth/login']);
-                    }
-                }
-            }));
-
-        } else {
-            return next.handle(req);
-        }
+      return next.handle(cloned).pipe(
+        tap(
+          () => {},
+          (err: any) => {
+            if (err instanceof HttpErrorResponse) {
+              if (err.status === 401) {
+                this.dialog.closeAll();
+                this.router.navigate(['/auth/login']);
+              }
+            }
+          }
+        )
+      );
+    } else {
+      return next.handle(req);
     }
+  }
 }

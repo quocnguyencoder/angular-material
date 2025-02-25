@@ -9,3 +9,34 @@ th.mat-sort-header-sorted {
 mat-card-content {
   flex-direction: column;
 }
+
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+table {
+  width: 100%;
+}
+
+mat-paginator {
+  margin-top: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}

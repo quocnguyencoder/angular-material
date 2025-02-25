@@ -17,6 +17,27 @@
       <mat-label>Symbol</mat-label>
       <input matInput formControlName="symbol" />
     </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Date</mat-label>
+      <input matInput formControlName="date" [matDatepicker]="datePicker" />
+      <mat-datepicker-toggle
+        matSuffix
+        [for]="datePicker"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #datePicker></mat-datepicker>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Time</mat-label>
+      <input matInput formControlName="time" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option *ngFor="let status of statusOptions" [value]="status">
+          {{ status }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>

@@ -1,32 +1,15 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { NGXLogger } from 'ngx-logger';
 import { Title } from '@angular/platform-browser';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ElementDialogComponent } from '../element-dialog/element-dialog.component';
-
-export interface PeriodicElement {
-  name: string;
-  position: number;
-  weight: number;
-  symbol: string;
-}
-
-const ELEMENT_DATA: PeriodicElement[] = [
-  { position: 1, name: 'Hydrogen', weight: 1.0079, symbol: 'H' },
-  { position: 2, name: 'Helium', weight: 4.0026, symbol: 'He' },
-  { position: 3, name: 'Lithium', weight: 6.941, symbol: 'Li' },
-  { position: 4, name: 'Beryllium', weight: 9.0122, symbol: 'Be' },
-  { position: 5, name: 'Boron', weight: 10.811, symbol: 'B' },
-  { position: 6, name: 'Carbon', weight: 12.0107, symbol: 'C' },
-  { position: 7, name: 'Nitrogen', weight: 14.0067, symbol: 'N' },
-  { position: 8, name: 'Oxygen', weight: 15.9994, symbol: 'O' },
-  { position: 9, name: 'Fluorine', weight: 18.9984, symbol: 'F' },
-  { position: 10, name: 'Neon', weight: 20.1797, symbol: 'Ne' },
-];
+import { FormControl } from '@angular/forms';
+import { PeriodicElement } from '../../../core/models/data.model';
+import { DataService } from '../../../core/services/data.service';
 
 @Component({
   selector: 'app-customer-list',
@@ -40,10 +23,24 @@ export class CustomerListComponent implements OnInit {
     'name',
     'weight',
     'symbol',
+    'date',
+    'time',
+    'status',
     'actions',
   ];
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
-  loading = true;
+
+  // Use MatTableDataSource for pagination and sorting
+  tableDataSource = new MatTableDataSource<PeriodicElement>([]);
+  loading = false; // Loading state
+
+  // Filter controls
+  nameFilter = new FormControl('');
+  dateFilter = new FormControl('');
+  timeFilter = new FormControl('');
+  statusFilter = new FormControl('');
+
+  // Status options for the select filter
+  statusOptions = ['Active', 'Inactive', 'Pending'];
 
   @ViewChild(MatSort, { static: true })
   sort: MatSort = new MatSort();
@@ -55,65 +52,144 @@ export class CustomerListComponent implements OnInit {
     private logger: NGXLogger,
     private notificationService: NotificationService,
     private titleService: Title,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private dataService: DataService // Inject the DataService
   ) {}
 
   ngOnInit() {
     this.titleService.setTitle('angular-material-template - Customers');
     this.logger.log('Customers loaded');
     this.notificationService.openSnackBar('Customers loaded');
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
 
-    setTimeout(() => {
-      this.loading = false;
-    }, 2000);
+    // Initialize default data if local storage is empty
+    this.dataService.initializeDefaultData();
+
+    // Load data from the service
+    this.loadData();
+
+    // Initialize sorting and pagination
+    this.tableDataSource.sort = this.sort;
+    this.tableDataSource.paginator = this.paginator;
+
+    // Listen to pagination changes
+    this.tableDataSource.paginator?.page.subscribe((pageEvent: PageEvent) => {
+      this.handlePageChange(pageEvent);
+    });
   }
 
+  // Load data from the service
+  loadData() {
+    this.loading = true;
+    this.dataService.getElements().subscribe({
+      next: (elements) => {
+        this.tableDataSource.data = elements;
+        this.loading = false;
+      },
+      error: (error) => {
+        this.notificationService.openSnackBar('Failed to load data');
+        this.loading = false;
+      },
+    });
+  }
+
+  // Apply filters
+  applyFilter() {
+    this.loading = true;
+    const filters = {
+      name: this.nameFilter.value || '',
+      date: this.dateFilter.value || '',
+      time: this.timeFilter.value || '',
+      status: this.statusFilter.value || '',
+    };
+
+    this.dataService.filterElements(filters).subscribe({
+      next: (filteredElements) => {
+        this.tableDataSource.data = filteredElements;
+        this.loading = false;
+      },
+      error: (error) => {
+        this.notificationService.openSnackBar('Failed to apply filters');
+        this.loading = false;
+      },
+    });
+  }
+
+  // Clear filters
+  clearFilters() {
+    this.nameFilter.setValue('');
+    this.dateFilter.setValue('');
+    this.timeFilter.setValue('');
+    this.statusFilter.setValue('');
+    this.loadData(); // Reload data without filters
+  }
+
+  // Handle pagination changes
+  handlePageChange(pageEvent: PageEvent) {
+    this.loading = true;
+    setTimeout(() => {
+      this.loading = false;
+    }, 1000); // Simulate a delay for pagination
+  }
+
+  // Open dialog for adding/editing an element
   openDialog(element?: PeriodicElement): void {
     const dialogRef = this.dialog.open(ElementDialogComponent, {
-      width: '250px',
+      width: '450px',
       data: element
         ? { ...element }
-        : { position: null, name: '', weight: null, symbol: '' },
+        : {
+            position: null,
+            name: '',
+            weight: null,
+            symbol: '',
+            date: null,
+            time: '',
+            status: '',
+          },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
+        this.loading = true;
         if (element) {
-          this.updateElement(result);
+          this.dataService.updateElement(result).subscribe({
+            next: () => {
+              this.loadData(); // Reload data after update
+              this.loading = false;
+            },
+            error: (error) => {
+              this.notificationService.openSnackBar('Failed to update element');
+              this.loading = false;
+            },
+          });
         } else {
-          this.addElement(result);
+          this.dataService.addElement(result).subscribe({
+            next: () => {
+              this.loadData(); // Reload data after add
+              this.loading = false;
+            },
+            error: (error) => {
+              this.notificationService.openSnackBar('Failed to add element');
+              this.loading = false;
+            },
+          });
         }
       }
     });
   }
 
-  addElement(element: PeriodicElement) {
-    this.dataSource.data = [...this.dataSource.data, element];
-    this.notificationService.openSnackBar('Element added');
-  }
-
-  updateElement(element: PeriodicElement) {
-    const index = this.dataSource.data.findIndex(
-      (e) => e.position === element.position
-    );
-    if (index !== -1) {
-      this.dataSource.data[index] = element;
-      this.dataSource.data = [...this.dataSource.data]; // Refresh the data source
-      this.notificationService.openSnackBar('Element updated');
-    }
-  }
-
+  // Delete an element
   deleteElement(position: number) {
-    this.dataSource.data = this.dataSource.data.filter(
-      (e) => e.position !== position
-    );
-    this.notificationService.openSnackBar('Element deleted');
-  }
-
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
+    this.loading = true;
+    this.dataService.deleteElement(position).subscribe({
+      next: () => {
+        this.loadData(); // Reload data after delete
+        this.loading = false;
+      },
+      error: (error) => {
+        this.notificationService.openSnackBar('Failed to delete element');
+        this.loading = false;
+      },
+    });
   }
 }
