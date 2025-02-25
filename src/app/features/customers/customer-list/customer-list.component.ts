@@ -10,6 +10,7 @@ import { ElementDialogComponent } from '../element-dialog/element-dialog.compone
 import { FormControl } from '@angular/forms';
 import { PeriodicElement } from '../../../core/models/data.model';
 import { DataService } from '../../../core/services/data.service';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-customer-list',
@@ -77,13 +78,15 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
-  // Load data from the service
-  loadData() {
+  loadData(): void {
     this.loading = true;
     this.dataService.getElements().subscribe({
       next: (elements) => {
-        this.tableDataSource.data = elements;
+        this.tableDataSource.data = elements; // Update the data source
+        this.tableDataSource.sort = this.sort; // Reassign sorting
+        this.tableDataSource.paginator = this.paginator; // Reassign pagination
         this.loading = false;
+        console.log('Data loaded', elements);
       },
       error: (error) => {
         this.notificationService.openSnackBar('Failed to load data');
@@ -154,8 +157,8 @@ export class CustomerListComponent implements OnInit {
         if (element) {
           this.dataService.updateElement(result).subscribe({
             next: () => {
+              console.log('Element updated', result);
               this.loadData(); // Reload data after update
-              this.loading = false;
             },
             error: (error) => {
               this.notificationService.openSnackBar('Failed to update element');
@@ -166,7 +169,6 @@ export class CustomerListComponent implements OnInit {
           this.dataService.addElement(result).subscribe({
             next: () => {
               this.loadData(); // Reload data after add
-              this.loading = false;
             },
             error: (error) => {
               this.notificationService.openSnackBar('Failed to add element');
@@ -180,16 +182,27 @@ export class CustomerListComponent implements OnInit {
 
   // Delete an element
   deleteElement(position: number) {
-    this.loading = true;
-    this.dataService.deleteElement(position).subscribe({
-      next: () => {
-        this.loadData(); // Reload data after delete
-        this.loading = false;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '300px',
+      data: {
+        title: 'Confirm Delete',
+        message: 'Are you sure you want to delete this element?',
       },
-      error: (error) => {
-        this.notificationService.openSnackBar('Failed to delete element');
-        this.loading = false;
-      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loading = true;
+        this.dataService.deleteElement(position).subscribe({
+          next: () => {
+            this.loadData(); // Reload data after delete
+          },
+          error: (error) => {
+            this.notificationService.openSnackBar('Failed to delete element');
+            this.loading = false;
+          },
+        });
+      }
     });
   }
 }

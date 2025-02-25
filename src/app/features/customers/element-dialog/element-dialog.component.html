@@ -42,7 +42,12 @@
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button (click)="onNoClick()">Cancel</button>
-  <button mat-button (click)="onSaveClick()" [disabled]="!elementForm.valid">
+  <button
+    color="primary"
+    mat-button
+    (click)="onSaveClick()"
+    [disabled]="!elementForm.valid"
+  >
     Save
   </button>
 </mat-dialog-actions>
